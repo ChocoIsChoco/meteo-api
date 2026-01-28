@@ -1,0 +1,157 @@
+openapi: 3.0.3
+info:
+  title: Meteo API
+  description: API providing live and archived weather data
+  version: "1.0.0"
+  contact:
+    name: Meteo API Team
+
+servers:
+  - url: https://api.example.com
+    description: Production server
+
+paths:
+  /meteo/v1/live:
+    get:
+      summary: Get live weather data
+      description: Returns live weather measurements for the requested parameters.
+      parameters:
+        - name: data
+          in: query
+          required: true
+          description: Comma-separated list of measurements to retrieve
+          schema:
+            type: string
+            example: temperature,humidity,pressure
+            
+      responses:
+        "200":
+          description: Live weather data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LiveResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /meteo/v1/archive:
+    get:
+      summary: Get archived weather data
+      description: Returns historical weather data between two timestamps.
+      parameters:
+        - name: start
+          in: query
+          required: true
+          description: Start timestamp (UTC)
+          schema:
+            type: integer
+            example: 1700000000
+        - name: end
+          in: query
+          required: true
+          description: End timestamp (UTC)
+          schema:
+            type: integer
+            example: 1700003600
+      responses:
+        "200":
+          description: Archived weather data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArchiveResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    LiveResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            date:
+              type: string
+              format: date-time
+              example: "2026-01-28T14:32:00Z"
+            location:
+              type: object
+              properties:
+                lat:
+                  type: number
+                  format: float
+                  example: 48.8566
+                long:
+                  type: number
+                  format: float
+                  example: 2.3522
+            measurements:
+              type: object
+              additionalProperties:
+                $ref: "#/components/schemas/Measurement"
+
+    Measurement:
+      type: object
+      properties:
+        unit:
+          type: string
+          example: "°C"
+        value:
+          type: number
+          example: 18.4
+
+    ArchiveResponse:
+      type: object
+      properties:
+        legend:
+          type: array
+          items:
+            type: string
+          example: ["time", "lat", "long", "temperature"]
+        unit:
+          type: array
+          items:
+            type: string
+          example: ["ISO8601", "°", "°", "°C"]
+        data:
+          type: array
+          items:
+            type: array
+            items:
+              oneOf:
+                - type: string
+                - type: number
+          example:
+            - ["2026-01-28T10:00:00Z", 48.85, 2.35, 17.8]
+            - ["2026-01-28T11:00:00Z", 48.85, 2.35, 18.1]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error_code:
+          type: integer
+          example: 400
+        error_message:
+          type: string
+          example: "Invalid query parameter"
