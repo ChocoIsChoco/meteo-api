@@ -7,6 +7,5 @@ secrets/
 *.log
 *.md
 swagger.yml
-init-mongo.js
 dist/
 .zencoder/
