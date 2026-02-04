@@ -1,0 +1,77 @@
+services:
+  mongo:
+    image: mongo:7.0
+    container_name: meteo-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME_FILE: /run/secrets/mongo_root_username
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo_root_password
+      MONGO_INITDB_DATABASE_FILE: /run/secrets/mongo_database
+    secrets:
+      - mongo_root_username
+      - mongo_root_password
+      - mongo_database
+    volumes:
+      - mongodb_data:/data/db
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    depends_on:
+      - mongo
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://admin:password123@mongo:27017/
+      ME_CONFIG_BASICAUTH_ENABLED: true
+      ME_CONFIG_BASICAUTH_USERNAME_FILE: /run/secrets/mongo_express_user
+      ME_CONFIG_BASICAUTH_PASSWORD_FILE: /run/secrets/mongo_express_password
+    secrets:
+      - mongo_express_user
+      - mongo_express_password
+  fakesonde:
+    build: .
+    working_dir: /app/fakesonde
+    command: node server.js
+
+  meteo-api:
+    command: node ./bin/www
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: meteo-api
+    restart: always
+    depends_on:
+      - mongo
+      - fakesonde
+    ports:
+      - "3000:3000"
+    environment:
+      MONGODB_URI_FILE: /run/secrets/mongodb_url
+      DB_NAME: meteo_api
+      PORT: 3000
+    secrets:
+      - mongodb_url
+    volumes:
+      - ./store:/app/store
+      - ./public:/app/public
+
+secrets:
+  mongo_root_username:
+    file: ./secrets/mongo_root_username.txt
+  mongo_root_password:
+    file: ./secrets/mongo_root_password.txt
+  mongo_database:
+    file: ./secrets/mongo_database.txt
+  mongo_express_user:
+    file: ./secrets/mongo_express_user.txt
+  mongo_express_password:
+    file: ./secrets/mongo_express_password.txt
+  mongodb_url:
+    file: ./secrets/mongodb_url.txt
+
+volumes:
+  mongodb_data:

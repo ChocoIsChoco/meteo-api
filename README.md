@@ -76,6 +76,14 @@ rain -> N/A
 ```
 
 
+j'ai mis aussi nodemon pour le suivi de mon seurveur
+https://aprs.gids.nl/nmea/#gga
+https://gist.github.com/gbzarelli/c15b607d62fc98ae436564bf8129ea8e
+
+docs MDN javascript
+https://stackoverflow.com/questions/983291/purpose-of-x20-x7e-in-regular-expressions
 
 
 
+https://docs.docker.com/build/building/variables/#env-usage-example
+https://blog.stephane-robert.info/docs/conteneurs/moteurs-conteneurs/docker/secrets/
