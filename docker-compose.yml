@@ -17,21 +17,6 @@ services:
       - mongodb_data:/data/db
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
 
-  mongo-express:
-    image: mongo-express
-    restart: always
-    depends_on:
-      - mongo
-    ports:
-      - 8081:8081
-    environment:
-      ME_CONFIG_MONGODB_URL: mongodb://admin:password123@mongo:27017/
-      ME_CONFIG_BASICAUTH_ENABLED: true
-      ME_CONFIG_BASICAUTH_USERNAME_FILE: /run/secrets/mongo_express_user
-      ME_CONFIG_BASICAUTH_PASSWORD_FILE: /run/secrets/mongo_express_password
-    secrets:
-      - mongo_express_user
-      - mongo_express_password
   fakesonde:
     build: .
     working_dir: /app/fakesonde
@@ -66,10 +51,6 @@ secrets:
     file: ./secrets/mongo_root_password.txt
   mongo_database:
     file: ./secrets/mongo_database.txt
-  mongo_express_user:
-    file: ./secrets/mongo_express_user.txt
-  mongo_express_password:
-    file: ./secrets/mongo_express_password.txt
   mongodb_url:
     file: ./secrets/mongodb_url.txt
 

@@ -88,3 +88,15 @@ https://stackoverflow.com/questions/983291/purpose-of-x20-x7e-in-regular-express
 https://docs.docker.com/build/building/variables/#env-usage-example
 https://blog.stephane-robert.info/docs/conteneurs/moteurs-conteneurs/docker/secrets/
 le mot de passe pour les raspberry est : ensg
+
+pi@piensg027
+
+
+quand je me suis mis sur le raspberry, j'ai cloné mon depot git dessus et après j'ai crée mes
+fichiers dans le dossier secrets pour les secrets puisqu'ils ne sont pas mis sur git
+après j'ai fait sudo cp -a /home/pi/meteoapi /opt/meteoapi et j'ai fait aussi 
+sudo cp meteo-api/meteoapi.service /etc/systemd/system/
+
+et j'ai fait :
+sudo systemctl enable meteoapi
+sudo systemctl start meteoapi
