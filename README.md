@@ -87,3 +87,4 @@ https://stackoverflow.com/questions/983291/purpose-of-x20-x7e-in-regular-express
 
 https://docs.docker.com/build/building/variables/#env-usage-example
 https://blog.stephane-robert.info/docs/conteneurs/moteurs-conteneurs/docker/secrets/
+le mot de passe pour les raspberry est : ensg
