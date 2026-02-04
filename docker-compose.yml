@@ -23,6 +23,8 @@ services:
       dockerfile: Dockerfile
     container_name: meteo-fakesonde
     restart: always
+    volumes:
+      - fakesonde_data:/app/temp
 
   meteo-api:
     command: node ./bin/www
@@ -45,6 +47,7 @@ services:
     volumes:
       - ./store:/app/store
       - ./public:/app/public
+      - fakesonde_data:/app/fakesonde/temp
 
 secrets:
   mongo_root_username:
@@ -58,3 +61,4 @@ secrets:
 
 volumes:
   mongodb_data:
+  fakesonde_data:

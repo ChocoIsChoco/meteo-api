@@ -16,6 +16,8 @@ RUN npm ci --only=production && npm cache clean --force
 
 COPY --chown=nodejs:nodejs . .
 
+RUN chown -R nodejs:nodejs /app
+
 USER nodejs
 
 CMD ["node", "server.js"]

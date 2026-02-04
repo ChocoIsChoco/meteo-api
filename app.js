@@ -30,13 +30,13 @@ watcher.on('change', async (filePath) => {
     console.log(`Nom du fichier : ${path.basename(filePath)}`);
     
     if (path.basename(filePath) === 'gpsNmea') {
-      const nmeaData = await readFileGpsNmea(path.basename(filePath));
+      const nmeaData = await readFileGpsNmea(filePath);
       await saveNmeaToDb(nmeaData);
       console.log('Données GPS NMEA sauvegardées');
     }
     
     if (path.basename(filePath) === 'sensors') {
-      const sensorsData = await readFileSensors(path.basename(filePath));
+      const sensorsData = await readFileSensors(filePath);
       await saveSensorsToDb(sensorsData);
       console.log('Données capteurs sauvegardées');
     }
