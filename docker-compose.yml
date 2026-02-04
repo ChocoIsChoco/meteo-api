@@ -18,9 +18,11 @@ services:
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
 
   fakesonde:
-    build: .
-    working_dir: /app/fakesonde
-    command: node server.js
+    build:
+      context: ./fakesonde
+      dockerfile: Dockerfile
+    container_name: meteo-fakesonde
+    restart: always
 
   meteo-api:
     command: node ./bin/www
