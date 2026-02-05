@@ -24,7 +24,6 @@ const getLiveWeatherData = async (dataParam) => {
     if (!dataParam) {
       let latestDate = new Date();
       let latestLocation = { lat: 0, long: 0 };
-      let latestNmeaData = null;
       
       if (collectionNames.includes('nmea')) {
         const nmeaCollection = db.collection('nmea');
@@ -33,7 +32,6 @@ const getLiveWeatherData = async (dataParam) => {
           latestDate = new Date(latestNmea.timestamp);
           latestLocation.lat = latestNmea.latitude;
           latestLocation.long = latestNmea.longitude;
-          latestNmeaData = latestNmea;
         }
       }
 
@@ -89,39 +87,13 @@ const getLiveWeatherData = async (dataParam) => {
         }
       }
 
-      if (latestNmeaData) {
-        result.data.measurements.nmea = {
-          altitude: {
-            unit: 'm',
-            value: latestNmeaData.altitude_m
-          },
-          speed_knots: {
-            unit: 'Kts',
-            value: latestNmeaData.speed_knots
-          },
-          course_deg: {
-            unit: '°',
-            value: latestNmeaData.course_deg
-          },
-          fix_quality: {
-            unit: '',
-            value: latestNmeaData.fix_quality
-          },
-          num_satellites: {
-            unit: '',
-            value: latestNmeaData.num_satellites
-          }
-        };
-      }
-
       console.log('Measurements finales:', result.data.measurements);
 
       return result;
     }
 
     const requestedData = dataParam.split(',').map(d => d.trim());
-    
-    // Récupérer les données GPS les plus récentes d'abord
+
     let latestDate = new Date();
     let latestLocation = { lat: 0, long: 0 };
     let latestNmeaData = null;
@@ -153,35 +125,6 @@ const getLiveWeatherData = async (dataParam) => {
         throw error;
       }
 
-      if (dataType === 'nmea') {
-        // Cas spécial pour nmea: retourner toutes les valeurs sauf lat/long (déjà dans location)
-        if (latestNmeaData) {
-          result.data.measurements[dataType] = {
-            altitude: {
-              unit: 'm',
-              value: latestNmeaData.altitude_m
-            },
-            speed_knots: {
-              unit: 'Kts',
-              value: latestNmeaData.speed_knots
-            },
-            course_deg: {
-              unit: '°',
-              value: latestNmeaData.course_deg
-            },
-            fix_quality: {
-              unit: '',
-              value: latestNmeaData.fix_quality
-            },
-            num_satellites: {
-              unit: '',
-              value: latestNmeaData.num_satellites
-            }
-          };
-        }
-        continue;
-      }
-
       if (collectionNames.includes(dataType)) {
         const collection = db.collection(dataType);
         const latestDoc = await collection.findOne(
@@ -190,7 +133,6 @@ const getLiveWeatherData = async (dataParam) => {
         );
         if (latestDoc) {
           if (dataType === 'wind') {
-            // Cas spécial pour wind: retourner toutes les valeurs
             result.data.measurements[dataType] = {
               speed_avg: {
                 unit: latestDoc.unit_speed || '',
@@ -210,7 +152,7 @@ const getLiveWeatherData = async (dataParam) => {
               }
             };
           } else {
-            // Cas normal pour les autres collections
+
             result.data.measurements[dataType] = {
               unit: latestDoc.unit || '',
               value: latestDoc.value || 0
@@ -238,9 +180,9 @@ const getArchivedWeatherData = async (start, end) => {
     const startDate = new Date(start * 1000);
     const endDate = new Date(end * 1000);
     
-    // Élargir la période pour être sûr d'inclure les données récentes
-    startDate.setHours(startDate.getHours() - 24); // -24 heures
-    endDate.setHours(endDate.getHours() + 1); // +1 heure
+
+    startDate.setHours(startDate.getHours() - 24);
+    endDate.setHours(endDate.getHours() + 1);
     
     console.log('Période recherchée:', startDate.toISOString(), 'à', endDate.toISOString());
     
@@ -268,14 +210,11 @@ const getArchivedWeatherData = async (start, end) => {
       gpsData.forEach(p => allTimestamps.add(p.timestamp));
     }
 
-    // Ordre souhaité par l'utilisateur
     const desiredOrder = ['temperature', 'humidity', 'pressure', 'luminosity', 'wind'];
-    
-    // On ne filtre plus 'nmea' car on ne veut que lat/long dans location
+
     const measureCollections = collectionNames.filter(name => name !== 'nmea');
     console.log('Collections disponibles pour mesures:', measureCollections);
 
-    // Pré-charger les unités et vérifier l'existence des données pour chaque collection dans l'ordre désiré
     const activeCollections = [];
     for (const collectionName of desiredOrder) {
       if (!measureCollections.includes(collectionName)) continue;
