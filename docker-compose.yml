@@ -47,6 +47,8 @@ services:
     volumes:
       - ./store:/app/store
       - ./public:/app/public
+      - ./routes:/app/routes
+      - ./views:/app/views
       - fakesonde_data:/app/fakesonde/temp
 
 secrets:

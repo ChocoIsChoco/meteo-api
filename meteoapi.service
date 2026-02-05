@@ -3,7 +3,7 @@ Description=Meteo API Service with Docker Compose
 
 [Service]
 WorkingDirectory=/opt/meteoapi
-ExecStart=/usr/bin/docker compose up -d
+ExecStart=/usr/bin/docker compose up
 
 [Install]
 WantedBy=multi-user.target

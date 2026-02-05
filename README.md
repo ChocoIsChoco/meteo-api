@@ -107,3 +107,28 @@ Il faut la version 5 des raspberry pour que les nouvelles versions des images do
 
 il faut faire docker compose down -v pour supprimer tous les volumes pour éviter les conflits entre les fichiers des differentes versions de mongo que j'ai monté le volume avec 
 mon docker compose
+
+
+
+Route /live :
+Sans paramètres (toutes les données) :
+http://localhost:3000/meteo/v1/live
+
+Avec paramètres spécifiques :
+http://localhost:3000/meteo/v1/live?data=temperature,humidity,wind
+
+Avec paramètre invalide (pour tester l'erreur 400) :
+http://localhost:3000/meteo/v1/live?data=temperature,param_invalide
+
+
+
+Route /archive :
+
+Avec timestamps (exemple pour 1 heure de données) :
+http://localhost:3000/meteo/v1/archive?start=1704067200&end=1704070800
+
+Avec timestamps récents (convertis depuis dates) :
+http://localhost:3000/meteo/v1/archive?start=1754342400&end=1754346000
+
+Sans paramètres (pour tester l'erreur 400) :
+http://localhost:3000/meteo/v1/archive
