@@ -1,5 +1,4 @@
 const fs = require('node:fs')
-const path = require('path');
 const { getDatabase } = require('../database');
 
 function nmeaLatToDecimal(nmeaLat, hemisphere) {
@@ -96,7 +95,7 @@ const readFileGpsNmea = async (filename) => {
     }
 
   } catch (error) {
-    console.error('Erreur lecture fichier GPS:', error);
+    console.error('Erreur lecture fichier NMEA:', error);
     throw error;
   }
 }

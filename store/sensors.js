@@ -1,5 +1,4 @@
 const fs = require('node:fs')
-const path = require('path');
 const { getDatabase } = require('../database');
 
 
@@ -66,7 +65,7 @@ const saveSensorsToDb = async (sensorsData) => {
     
     return results;
   } catch (dbError) {
-    console.error('Erreur de sauvegarde sensors MongoDB:', dbError);
+    console.error('Erreur de sauvegarde des données du sensors MongoDB:', dbError);
     throw dbError;
   }
 }

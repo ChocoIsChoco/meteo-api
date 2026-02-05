@@ -100,3 +100,5 @@ sudo cp meteo-api/meteoapi.service /etc/systemd/system/
 et j'ai fait :
 sudo systemctl enable meteoapi
 sudo systemctl start meteoapi
+
+la version de mongo qui est disponible sur raspberry est : mongo:4.4.18
