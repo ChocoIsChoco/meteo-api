@@ -22,7 +22,6 @@ const getLiveWeatherData = async (dataParam) => {
     console.log('Collections disponibles:', collectionNames);
 
     if (!dataParam) {
-      // Récupérer les données GPS les plus récentes d'abord
       let latestDate = new Date();
       let latestLocation = { lat: 0, long: 0 };
       let latestNmeaData = null;
@@ -270,10 +269,10 @@ const getArchivedWeatherData = async (start, end) => {
     }
 
     // Ordre souhaité par l'utilisateur
-    const desiredOrder = ['temperature', 'humidity', 'pressure', 'nmea', 'luminosity', 'wind'];
+    const desiredOrder = ['temperature', 'humidity', 'pressure', 'luminosity', 'wind'];
     
-    // On ne filtre plus 'nmea' car l'utilisateur le veut dans la liste
-    const measureCollections = collectionNames;
+    // On ne filtre plus 'nmea' car on ne veut que lat/long dans location
+    const measureCollections = collectionNames.filter(name => name !== 'nmea');
     console.log('Collections disponibles pour mesures:', measureCollections);
 
     // Pré-charger les unités et vérifier l'existence des données pour chaque collection dans l'ordre désiré
@@ -281,10 +280,9 @@ const getArchivedWeatherData = async (start, end) => {
     for (const collectionName of desiredOrder) {
       if (!measureCollections.includes(collectionName)) continue;
 
-      const timeField = collectionName === 'nmea' ? 'timestamp' : 'date';
       const collection = db.collection(collectionName);
       const query = {};
-      query[timeField] = { 
+      query.date = { 
         $gte: startDate.toISOString(), 
         $lte: new Date(endDate.getTime() + 60000).toISOString() 
       };
@@ -294,6 +292,7 @@ const getArchivedWeatherData = async (start, end) => {
       if (measureData.length > 0) {
         activeCollections.push(collectionName);
         if (collectionName === 'wind') {
+          // Cas spécial pour wind: ajouter toutes les sous-valeurs individuellement
           result.legend.push('wind_speed_avg', 'wind_speed_max', 'wind_speed_min', 'wind_heading');
           const sample = await db.collection('wind').findOne();
           result.unit.push(
@@ -302,10 +301,6 @@ const getArchivedWeatherData = async (start, end) => {
             sample?.unit_speed || 'Kts',
             sample?.unit_heading || '°'
           );
-        } else if (collectionName === 'nmea') {
-          // Cas spécial pour nmea: ajouter toutes les sous-valeurs dans la légende
-          result.legend.push('nmea_altitude', 'nmea_latitude', 'nmea_longitude', 'nmea_speed_knots', 'nmea_course_deg', 'nmea_fix_quality', 'nmea_num_satellites');
-          result.unit.push('m', '°', '°', 'Kts', '°', '', '');
         } else {
           result.legend.push(collectionName);
           const sample = await db.collection(collectionName).findOne();
@@ -314,49 +309,40 @@ const getArchivedWeatherData = async (start, end) => {
 
         // Ajouter les timestamps de cette collection à la chronologie
         const allDocs = await db.collection(collectionName).find(query).toArray();
-        allDocs.forEach(d => allTimestamps.add(d.date || d.timestamp));
+        allDocs.forEach(d => allTimestamps.add(d.date));
       }
     }
 
     const sortedTimestamps = Array.from(allTimestamps).sort();
     console.log('Total timestamps uniques:', sortedTimestamps.length);
 
+    // Pré-charger toutes les données NMEA pour éviter les requêtes dans la boucle
+    const allNmeaData = [];
+    if (collectionNames.includes('nmea')) {
+      const nmeaCollection = db.collection('nmea');
+      const nmeaQuery = {
+        timestamp: { 
+          $gte: startDate.toISOString(), 
+          $lte: new Date(endDate.getTime() + 60000).toISOString() 
+        }
+      };
+      allNmeaData.push(...await nmeaCollection.find(nmeaQuery).sort({ timestamp: 1 }).toArray());
+    }
+
     for (const timestamp of sortedTimestamps) {
       let lat = null;
       let long = null;
-      let nmeaValues = null;
       
-      // Toujours chercher le NMEA le plus récent avant ce timestamp
-      if (collectionNames.includes('nmea')) {
-        const nmeaCollection = db.collection('nmea');
-        const closestNmea = await nmeaCollection.findOne({
-          timestamp: { $lte: timestamp }
-        }, { sort: { timestamp: -1 } });
-        
-        if (closestNmea) {
-          lat = closestNmea.latitude;
-          long = closestNmea.longitude;
-          nmeaValues = [
-            closestNmea.altitude_m,
-            closestNmea.latitude,
-            closestNmea.longitude,
-            closestNmea.speed_knots,
-            closestNmea.course_deg,
-            closestNmea.fix_quality,
-            closestNmea.num_satellites
-          ];
-        }
+      // Chercher les coordonnées GPS pour ce timestamp
+      const matchingNmea = allNmeaData.find(nmea => nmea.timestamp <= timestamp);
+      if (matchingNmea) {
+        lat = matchingNmea.latitude;
+        long = matchingNmea.longitude;
       }
 
       const rowData = [timestamp, lat, long];
 
       for (const collectionName of activeCollections) {
-        if (collectionName === 'nmea') {
-          // Pour nmea, mettre toutes les valeurs dans un tableau
-          rowData.push(nmeaValues || [null, null, null, 0, 0, 0, 0]);
-          continue;
-        }
-
         const collection = db.collection(collectionName);
         const closestMeasure = await collection.findOne({
           date: { $lte: timestamp }
@@ -364,20 +350,20 @@ const getArchivedWeatherData = async (start, end) => {
 
         if (closestMeasure) {
           if (collectionName === 'wind') {
-            // Pour wind, mettre toutes les valeurs dans un tableau
-            rowData.push([
+            // Pour wind, ajouter les valeurs individuellement
+            rowData.push(
               closestMeasure.speed_avg || 0,
               closestMeasure.speed_max || 0,
               closestMeasure.speed_min || 0,
               closestMeasure.heading || 0
-            ]);
+            );
           } else {
             rowData.push(closestMeasure.value || 0);
           }
         } else {
           if (collectionName === 'wind') {
-            // Pour wind, ajouter un tableau de valeurs null
-            rowData.push([null, null, null, null]);
+            // Pour wind, ajouter les valeurs null individuellement
+            rowData.push(null, null, null, null);
           } else {
             rowData.push(null);
           }

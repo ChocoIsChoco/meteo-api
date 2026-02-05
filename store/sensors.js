@@ -60,7 +60,6 @@ const saveSensorsToDb = async (sensorsData) => {
       };
       
       const result = await collection.insertOne(document);
-      console.log(`Donnée ${measure.name} sauvegardée avec ID:`, result.insertedId);
       results.push(result);
     }
     
