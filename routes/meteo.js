@@ -9,7 +9,6 @@ router.get('/live', async function(req, res, next) {
     const result = await getLiveWeatherData(dataParam);
     res.json(result);
   } catch (error) {
-    console.error('Error in /live route:', error);
     if (error.status === 400) {
       res.status(400).json({
         error_code: 400,
@@ -40,7 +39,6 @@ router.get('/archive', async function(req, res, next) {
     const result = await getArchivedWeatherData(parseInt(start), parseInt(end));
     res.json(result);
   } catch (error) {
-    console.error('Error in /archive route:', error);
     res.status(500).json({
       error_code: 500,
       error_message: 'Internal server error'

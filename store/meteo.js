@@ -19,8 +19,6 @@ const getLiveWeatherData = async (dataParam) => {
       }
     }
 
-    console.log('Collections disponibles:', collectionNames);
-
     if (!dataParam) {
       let latestDate = new Date();
       let latestLocation = { lat: 0, long: 0 };
@@ -46,49 +44,35 @@ const getLiveWeatherData = async (dataParam) => {
       for (const collectionName of collectionNames) {
         if (collectionName !== 'nmea') {
           const collection = db.collection(collectionName);
-          // Chercher sans la contrainte de date pour le debug
           const latestDoc = await collection.findOne({}, { sort: { date: -1 } });
-          console.log(`Collection ${collectionName}:`, latestDoc ? 'trouvé' : 'non trouvé');
+
           if (latestDoc) {
-            console.log(`Date du document: ${latestDoc.date}, Date de référence: ${latestDate}`);
-            // Vérifier si le document est avant la date de référence
-            if (new Date(latestDoc.date) <= latestDate) {
-              if (collectionName === 'wind') {
-                // Cas spécial pour wind: retourner toutes les valeurs
-                result.data.measurements[collectionName] = {
-                  speed_avg: {
-                    unit: latestDoc.unit_speed || '',
-                    value: latestDoc.speed_avg || 0
-                  },
-                  speed_max: {
-                    unit: latestDoc.unit_speed || '',
-                    value: latestDoc.speed_max || 0
-                  },
-                  speed_min: {
-                    unit: latestDoc.unit_speed || '',
-                    value: latestDoc.speed_min || 0
-                  },
-                  heading: {
-                    unit: latestDoc.unit_heading || '',
-                    value: latestDoc.heading || 0
-                  }
-                };
-              } else {
-                // Cas normal pour les autres collections
-                result.data.measurements[collectionName] = {
-                  unit: latestDoc.unit || '',
-                  value: latestDoc.value || 0
-                };
-              }
+            if (collectionName === 'wind') {
+              result.data.measurements.wind_speed_avg = {
+                unit: latestDoc.unit_speed || '',
+                value: latestDoc.speed_avg || 0
+              };
+              result.data.measurements.wind_speed_max = {
+                unit: latestDoc.unit_speed || '',
+                value: latestDoc.speed_max || 0
+              };
+              result.data.measurements.wind_speed_min = {
+                unit: latestDoc.unit_speed || '',
+                value: latestDoc.speed_min || 0
+              };
+              result.data.measurements.wind_heading = {
+                unit: latestDoc.unit_heading || '',
+                value: latestDoc.heading || 0
+              };
             } else {
-              console.log(`Document ${collectionName} est après la date de référence`);
+              result.data.measurements[collectionName] = {
+                unit: latestDoc.unit || '',
+                value: latestDoc.value || 0
+              };
             }
           }
         }
       }
-
-      console.log('Measurements finales:', result.data.measurements);
-
       return result;
     }
 
@@ -96,7 +80,6 @@ const getLiveWeatherData = async (dataParam) => {
 
     let latestDate = new Date();
     let latestLocation = { lat: 0, long: 0 };
-    let latestNmeaData = null;
     
     if (collectionNames.includes('nmea')) {
       const nmeaCollection = db.collection('nmea');
@@ -105,7 +88,6 @@ const getLiveWeatherData = async (dataParam) => {
         latestDate = new Date(latestNmea.timestamp);
         latestLocation.lat = latestNmea.latitude;
         latestLocation.long = latestNmea.longitude;
-        latestNmeaData = latestNmea;
       }
     }
 
@@ -133,23 +115,21 @@ const getLiveWeatherData = async (dataParam) => {
         );
         if (latestDoc) {
           if (dataType === 'wind') {
-            result.data.measurements[dataType] = {
-              speed_avg: {
-                unit: latestDoc.unit_speed || '',
-                value: latestDoc.speed_avg || 0
-              },
-              speed_max: {
-                unit: latestDoc.unit_speed || '',
-                value: latestDoc.speed_max || 0
-              },
-              speed_min: {
-                unit: latestDoc.unit_speed || '',
-                value: latestDoc.speed_min || 0
-              },
-              heading: {
-                unit: latestDoc.unit_heading || '',
-                value: latestDoc.heading || 0
-              }
+            result.data.measurements.wind_speed_avg = {
+              unit: latestDoc.unit_speed || '',
+              value: latestDoc.speed_avg || 0
+            };
+            result.data.measurements.wind_speed_max = {
+              unit: latestDoc.unit_speed || '',
+              value: latestDoc.speed_max || 0
+            };
+            result.data.measurements.wind_speed_min = {
+              unit: latestDoc.unit_speed || '',
+              value: latestDoc.speed_min || 0
+            };
+            result.data.measurements.wind_heading = {
+              unit: latestDoc.unit_heading || '',
+              value: latestDoc.heading || 0
             };
           } else {
 
@@ -175,8 +155,6 @@ const getArchivedWeatherData = async (start, end) => {
     const collections = await db.listCollections().toArray();
     const collectionNames = collections.map(c => c.name);
     
-    console.log('Collections disponibles:', collectionNames);
-    
     const startDate = new Date(start * 1000);
     const endDate = new Date(end * 1000);
     
@@ -184,7 +162,7 @@ const getArchivedWeatherData = async (start, end) => {
     startDate.setHours(startDate.getHours() - 24);
     endDate.setHours(endDate.getHours() + 1);
     
-    console.log('Période recherchée:', startDate.toISOString(), 'à', endDate.toISOString());
+    // console.log('Période recherchée:', startDate.toISOString(), 'à', endDate.toISOString());
     
     const result = {
       legend: ['time', 'lat', 'long'],
@@ -195,7 +173,6 @@ const getArchivedWeatherData = async (start, end) => {
     let gpsData = [];
     if (collectionNames.includes('nmea')) {
       const nmeaCollection = db.collection('nmea');
-      // Convertir les dates en format ISO string pour comparer avec timestamp
       gpsData = await nmeaCollection.find({
         timestamp: { 
           $gte: startDate.toISOString(), 
@@ -255,7 +232,6 @@ const getArchivedWeatherData = async (start, end) => {
     const sortedTimestamps = Array.from(allTimestamps).sort();
     console.log('Total timestamps uniques:', sortedTimestamps.length);
 
-    // Pré-charger toutes les données NMEA pour éviter les requêtes dans la boucle
     const allNmeaData = [];
     if (collectionNames.includes('nmea')) {
       const nmeaCollection = db.collection('nmea');
@@ -271,8 +247,7 @@ const getArchivedWeatherData = async (start, end) => {
     for (const timestamp of sortedTimestamps) {
       let lat = null;
       let long = null;
-      
-      // Chercher les coordonnées GPS pour ce timestamp
+
       const matchingNmea = allNmeaData.find(nmea => nmea.timestamp <= timestamp);
       if (matchingNmea) {
         lat = matchingNmea.latitude;
@@ -289,7 +264,6 @@ const getArchivedWeatherData = async (start, end) => {
 
         if (closestMeasure) {
           if (collectionName === 'wind') {
-            // Pour wind, ajouter les valeurs individuellement
             rowData.push(
               closestMeasure.speed_avg || 0,
               closestMeasure.speed_max || 0,
@@ -301,7 +275,6 @@ const getArchivedWeatherData = async (start, end) => {
           }
         } else {
           if (collectionName === 'wind') {
-            // Pour wind, ajouter les valeurs null individuellement
             rowData.push(null, null, null, null);
           } else {
             rowData.push(null);
@@ -311,7 +284,7 @@ const getArchivedWeatherData = async (start, end) => {
       result.data.push(rowData);
     }
 
-    console.log('Données finales:', result.data.length, 'lignes');
+    // console.log('Données finales:', result.data.length, 'lignes');
     return result;
   } catch (error) {
     console.error('Erreur lors de la récupération des données archivées:', error);

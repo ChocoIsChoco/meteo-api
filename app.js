@@ -1,5 +1,6 @@
 require('dotenv').config();
 var createError = require('http-errors');
+var cors = require('cors');
 var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
@@ -46,6 +47,12 @@ watcher.on('change', async (filePath) => {
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
+const corsOptions = {
+  origin: ['http://piensg027:8081', 'http://piensg028:8080', 'http://piensg030:8080', 'http://piensg031:8080'],
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
