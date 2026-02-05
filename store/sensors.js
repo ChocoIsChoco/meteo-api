@@ -43,7 +43,6 @@ const saveSensorsToDb = async (sensorsData) => {
       };
       
       const windResult = await windCollection.insertOne(windDocument);
-      console.log('Données vent sauvegardées avec ID:', windResult.insertedId);
       results.push(windResult);
     }
 
