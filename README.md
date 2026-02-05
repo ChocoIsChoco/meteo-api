@@ -102,3 +102,8 @@ sudo systemctl enable meteoapi
 sudo systemctl start meteoapi
 
 la version de mongo qui est disponible sur raspberry est : mongo:4.4.18
+Il faut la version 5 des raspberry pour que les nouvelles versions des images docker fonctionnent dessus
+
+
+il faut faire docker compose down -v pour supprimer tous les volumes pour éviter les conflits entre les fichiers des differentes versions de mongo que j'ai monté le volume avec 
+mon docker compose
