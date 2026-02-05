@@ -100,11 +100,16 @@ const readFileGpsNmea = async (filename) => {
   }
 }
 
-const saveNmeaToDb = async  (nmeaData) => {
+const saveNmeaToDb = async (nmeaData) => {
   try {
     const db = getDatabase();
     const collection = db.collection('nmea');
+
+    const unifiedTimestamp = new Date().toISOString();
+    nmeaData.timestamp = unifiedTimestamp;
+    
     const result = await collection.insertOne(nmeaData);
+    console.log('Document NMEA sauvegardé avec ID:', result.insertedId);
     return result;
   } catch (dbError) {
     console.error('Erreur de sauvegarde MongoDB:', dbError);

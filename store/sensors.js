@@ -18,7 +18,9 @@ const saveSensorsToDb = async (sensorsData) => {
     const db = getDatabase();
     const results = [];
     
-
+    // Générer un seul timestamp pour tout ce cycle de sauvegarde
+    const unifiedTimestamp = new Date().toISOString();
+    
     const windMeasures = {};
     const windUnits = {};
     const otherMeasures = [];
@@ -36,7 +38,7 @@ const saveSensorsToDb = async (sensorsData) => {
     if (Object.keys(windMeasures).length > 0) {
       const windCollection = db.collection('wind');
       const windDocument = {
-        date: sensorsData.date,
+        date: unifiedTimestamp,
         ...windMeasures,
         unit_heading: windUnits.heading,
         unit_speed: windUnits.speed_avg
@@ -51,7 +53,7 @@ const saveSensorsToDb = async (sensorsData) => {
       const collection = db.collection(tableName);
       
       const document = {
-        date: sensorsData.date,
+        date: unifiedTimestamp,
         desc: measure.desc,
         unit: measure.unit,
         value: parseFloat(measure.value)
