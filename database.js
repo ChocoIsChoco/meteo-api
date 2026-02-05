@@ -38,15 +38,8 @@ function getDatabase() {
   return db;
 }
 
-async function closeConnection() {
-  if (client) {
-    await client.close();
-    console.log('Connexion MongoDB fermée');
-  }
-}
 
 module.exports = {
   connectToDatabase,
-  getDatabase,
-  closeConnection
+  getDatabase
 };

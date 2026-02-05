@@ -18,7 +18,7 @@ const saveSensorsToDb = async (sensorsData) => {
     const db = getDatabase();
     const results = [];
     
-    // Générer un seul timestamp pour tout ce cycle de sauvegarde
+
     const unifiedTimestamp = new Date().toISOString();
     
     const windMeasures = {};

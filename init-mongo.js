@@ -1,4 +1,3 @@
-
 db = db.getSiblingDB('meteo_api');
 
 

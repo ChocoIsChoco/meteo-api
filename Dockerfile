@@ -11,6 +11,9 @@ COPY package*.json ./
 RUN npm ci --only=production && npm cache clean --force
 
 
+
+
+
 FROM node:${NODE_VERSION}-alpine${ALPINE_VERSION} AS runtime
 
 WORKDIR /app
